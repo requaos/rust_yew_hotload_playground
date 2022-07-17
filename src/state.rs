@@ -51,4 +51,28 @@ impl Server {
         }
         return (self.ap_state.current_term, false);
     }
+
+    fn AppendEntries(
+        &mut self,
+        term: i64,
+        leader_id: i64,
+        prev_log_idx: i64,
+        prev_log_term: i64,
+        entries: Vec<LogEntry>,
+        leader_commit: i64,
+    ) -> (i64, bool) {
+        if self.ap_state.current_term > term {
+            return (self.ap_state.current_term, false);
+        }
+        if self.ap_state.logs[prev_log_idx].term_idx != prev_log_term {
+            return (self.ap_state.current_term, false);
+        }
+
+        // TODO: Do write operations here for log entry comparison and append
+        // - If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it
+        // - Append any new entries not already in the log
+        // - If leaderCommit > commitIndex, set commitIndex =  min(leaderCommit, index of last new entry)
+
+        return (self.ap_state.current_term, false);
+    }
 }
