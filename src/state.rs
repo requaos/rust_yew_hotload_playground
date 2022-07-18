@@ -1,20 +1,47 @@
+// Commit changes to disk before responding to RPC calls
 struct AllPersistentState {
     current_term: i64,
     voted_for: Option<i32>,
     logs: Vec<LogEntry>,
 }
+impl Default for AllPersistentState {
+    fn default() -> Self {
+        Self {
+            current_term: 0,
+            voted_for: None,
+            // Occupy index 0 with start command (noop, but may leverage for initialization checks)
+            logs: LogEntry::init_logs(),
+        }
+    }
+}
+
+enum StateCommand {
+    START,
+    INSERT,
+    DELETE,
+}
 struct LogEntry {
     command: StateCommand,
     term_idx: i64,
 }
-enum StateCommand {
-    INSERT,
-    DELETE,
+impl LogEntry {
+    pub fn new(command: StateCommand, term: i64) -> Self {
+        Self {
+            command,
+            term_idx: term,
+        }
+    }
+    pub fn init_logs() -> Vec<LogEntry> {
+        vec![[LogEntry {
+            command: StateCommand::START,
+            term_idx: 0,
+        }]]
+    }
 }
 
 struct AllVolatileState {
     commit_idx: i64,
-    last_applied: LogEntry,
+    last_applied: i64,
 }
 struct LeaderVolatileState {
     next_idx: Vec<i64>,
@@ -29,8 +56,25 @@ struct Server {
     lv_state: LeaderVolatileState,
 }
 
+impl Default for Server {
+    fn default() -> Self {
+        Self {
+            ap_state: AllPersistentState::default(),
+            av_state: AllVolatileState {
+                commit_idx: 0,
+                last_applied: 0,
+            },
+            is_leader: false,
+            lv_state: LeaderVolatileState {
+                next_idx: vec![[1]],
+                match_idx: vec![[0]],
+            },
+        }
+    }
+}
+
 impl Server {
-    fn RequestVote(
+    pub fn RequestVote(
         &self,
         term: i64,
         candidate_id: i32,
@@ -52,7 +96,7 @@ impl Server {
         return (self.ap_state.current_term, false);
     }
 
-    fn AppendEntries(
+    pub fn AppendEntries(
         &mut self,
         term: i64,
         leader_id: i64,
