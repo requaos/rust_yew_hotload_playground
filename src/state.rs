@@ -40,6 +40,7 @@ impl LogEntry {
 }
 
 struct AllVolatileState {
+    // TODO: For all these monotonically increasing i64 values, reference https://docs.rs/unique_id/latest/unique_id/sequence/struct.SequenceGenerator.html#
     commit_idx: i64,
     last_applied: i64,
 }
